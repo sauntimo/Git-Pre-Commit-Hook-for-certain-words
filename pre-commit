@@ -3,10 +3,11 @@
 # Based on code by Remigijus Jarmalavičius
 # Checks the files to be committed for the presence of print_r(), var_dump() and die()
 # The array below can be extended for further checks
+# Adapted by Tim Saunders
 
-checks[1]="var_dump("
-checks[2]="print_r("
-checks[3]="die"
+checks[1]="varaibles"
+checks[2]="writedump"
+checks[3]="console.log"
 
 element_count=${#checks[@]}
 let "element_count = $element_count + 1"
@@ -24,14 +25,14 @@ do
     elif [ $(echo "$file" | grep 'added') ]; then
         FILE_ACTION="added"
     else 
-        EXTENSION=$(echo "$file" | grep ".php$")
+        EXTENSION=$(echo "$file" | grep "(\.cfm|\.cfc|\.js)$")
         if [ "$EXTENSION" != "" ]; then
 
             index=1
             while [ "$index" -lt "$element_count" ]
             do
                 echo "Checking $FILE_ACTION file: $file [${checks[$index]}]" 
-                ERRORS=$(grep "${checks[$index]}" $ROOT_DIR$file >&1)
+                ERRORS=$(grep -i "${checks[$index]}" $ROOT_DIR$file >&1)
                 if [ "$ERRORS" != "" ]; then
                     if [ "$ERRORS_BUFFER" != "" ]; then
                         ERRORS_BUFFER="$ERRORS_BUFFER\n$ERRORS"
