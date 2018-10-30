@@ -1,9 +1,10 @@
-#!/bin/bash
 # Author: Nikolaos Dimopoulos
 # Based on code by Remigijus Jarmalavičius
 # Checks the files to be committed for the presence of print_r(), var_dump() and die()
 # The array below can be extended for further checks
 # Adapted by Tim Saunders
+
+printf "\n\nRunning checks for banned expressions...\n\n"
 
 checks[1]="varaibles"
 checks[2]="writedump"
@@ -13,26 +14,27 @@ element_count=${#checks[@]}
 let "element_count = $element_count + 1"
 
 ROOT_DIR="$(pwd)/"
-LIST=$(git status | grep -e '\#.*\(modified\|added\)')
+LIST=$(git status | grep -e '\(modified\|new file\)')
 ERRORS_BUFFER=""
 for file in $LIST
 do
+
     if [ "$file" == '#' ]; then
         continue
     fi
     if [ $(echo "$file" | grep 'modified') ]; then
         FILE_ACTION="modified"
-    elif [ $(echo "$file" | grep 'added') ]; then
-        FILE_ACTION="added"
-    else 
-        EXTENSION=$(echo "$file" | grep "(\.cfm|\.cfc|\.js)$")
+    elif [ $(echo "$file" | grep 'new file') ]; then
+        FILE_ACTION="new"
+    else
+        EXTENSION=$(echo "$file" | grep "\(.cfc\|.cfm\|.js\)$")
         if [ "$EXTENSION" != "" ]; then
 
             index=1
             while [ "$index" -lt "$element_count" ]
             do
-                echo "Checking $FILE_ACTION file: $file [${checks[$index]}]" 
-                ERRORS=$(grep -i "${checks[$index]}" $ROOT_DIR$file >&1)
+                # echo "Checking $FILE_ACTION file: $file [${checks[$index]}]"
+                ERRORS=$(grep "${checks[$index]}" $ROOT_DIR$file >&1)
                 if [ "$ERRORS" != "" ]; then
                     if [ "$ERRORS_BUFFER" != "" ]; then
                         ERRORS_BUFFER="$ERRORS_BUFFER\n$ERRORS"
@@ -47,12 +49,13 @@ do
     fi
 done
 if [ "$ERRORS_BUFFER" != "" ]; then
-    echo 
-    echo "These errors were found in try-to-commit files: "
+    echo
+    echo "These banned expressions were found in files you tried to commit: "
     echo -e $ERRORS_BUFFER
-    echo 
+    echo
     echo "Can't commit, fix errors first."
     exit 1
 else
     echo "Commited successfully."
 fi
+
